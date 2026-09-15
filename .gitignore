@@ -1,0 +1,23 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Specific binary names
+vt-scanner
+
+# Environment variables
+.env
+
+# Generated reports
+vt_scan_report.json
+*.json
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Go workspace
+go.work
