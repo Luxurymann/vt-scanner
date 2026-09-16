@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kdomanski/iso9660"
 	"github.com/nwaples/rardecode/v2"
 )
 
@@ -26,6 +27,8 @@ func Stream(archivePath, password string, processFile func(name string, size int
 		return streamTar(archivePath, processFile)
 	} else if ext == ".rar" {
 		return streamRar(archivePath, password, processFile)
+	} else if ext == ".iso" {
+		return streamIso(archivePath, processFile)
 	}
 
 	return fmt.Errorf("unsupported archive format: %s", ext)
@@ -140,6 +143,53 @@ func extractTarStream(tr *tar.Reader, processFile func(name string, size int64, 
 		err = processFile(header.Name, header.Size, tr)
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func streamIso(archivePath string, processFile func(name string, size int64, reader io.Reader) error) error {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	img, err := iso9660.OpenImage(file)
+	if err != nil {
+		return err
+	}
+
+	root, err := img.RootDir()
+	if err != nil {
+		return err
+	}
+
+	return walkIso(root, "", processFile)
+}
+
+func walkIso(dir *iso9660.File, prefix string, processFile func(name string, size int64, reader io.Reader) error) error {
+	children, err := dir.GetChildren()
+	if err != nil {
+		return err
+	}
+
+	for _, c := range children {
+		name := c.Name()
+		// Skip special entries
+		if name == "." || name == ".." || name == "" {
+			continue
+		}
+
+		path := prefix + name
+		if c.IsDir() {
+			if err := walkIso(c, path+"/", processFile); err != nil {
+				return err
+			}
+		} else {
+			if err := processFile(path, c.Size(), c.Reader()); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

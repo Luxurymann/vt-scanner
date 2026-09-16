@@ -394,7 +394,7 @@ func calculateHash(filePath string) (string, error) {
 
 func isArchive(filePath string) bool {
 	ext := strings.ToLower(filepath.Ext(filePath))
-	return ext == ".zip" || ext == ".tar" || ext == ".rar" || (ext == ".gz" && strings.HasSuffix(strings.ToLower(filePath), ".tar.gz"))
+	return ext == ".zip" || ext == ".tar" || ext == ".rar" || ext == ".iso" || (ext == ".gz" && strings.HasSuffix(strings.ToLower(filePath), ".tar.gz"))
 }
 
 func isIgnored(filePath string) bool {
